@@ -1,0 +1,22 @@
+{
+  "SyntaxError: invalid syntax": "You have a typo or a missing symbol like a colon, bracket, or quote.",
+  "NameError: name 'x' is not defined": "You are using a variable that hasn't been defined or is misspelled.",
+  "TypeError: unsupported operand type(s) for +: 'int' and 'str'": "You're trying to combine an integer and a string. Use type conversion like str() or int().",
+  "IndexError: list index out of range": "You're trying to access an index that doesn't exist in the list. Check your loop or index value.",
+  "IndentationError: expected an indented block": "Python relies on indentation. This error happens when you forget to indent or indent inconsistently.",
+  "AttributeError: 'list' object has no attribute 'split'": "You're calling a method that doesn't exist for that type. Check the variable type.",
+  "KeyError: 'key'": "You're trying to access a dictionary key that doesn't exist. Use .get() or check the key first.",
+  "ZeroDivisionError: division by zero": "You tried to divide a number by zero. Check for zero before division.",
+  "ValueError: invalid literal for int() with base 10": "You're trying to convert a string to an integer, but the string isn't a valid number.",
+  "ModuleNotFoundError: No module named 'xyz'": "Python can't find the module. You may need to install it using pip.",
+  "ImportError: cannot import name": "You're trying to import something that doesn't exist in the module. Check the module's contents.",
+  "FileNotFoundError: [Errno 2] No such file or directory": "The file you're trying to open doesn't exist. Check the file path.",
+  "UnboundLocalError: local variable referenced before assignment": "You're using a variable before assigning it inside a function. Declare it properly or use `global` if needed.",
+  "RecursionError: maximum recursion depth exceeded": "Your function is calling itself too many times. Make sure there's a base case to stop recursion.",
+  "TypeError: 'int' object is not subscriptable": "You're trying to access an element from an integer using brackets, which is not allowed.",
+  "TypeError: 'NoneType' object is not iterable": "You're trying to iterate over a variable that is None. Check where it's set.",
+  "TypeError: missing 1 required positional argument": "You're calling a function but didn't provide all required arguments.",
+  "IndentationError: unexpected indent": "You added extra indentation where Python doesn't expect it. Fix spacing.",
+  "TypeError: object of type 'NoneType' has no len()": "You tried to get the length of None. Make sure the variable is not None.",
+  "AssertionError": "An assert statement failed. It means a condition you expected to be true was false."
+}
