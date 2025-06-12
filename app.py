@@ -27,16 +27,6 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline,AutoModelForSeq2SeqLM
 from flask_ngrok import run_with_ngrok
 
-# Load CodeT5p for error explanation
-t5_tokenizer = AutoTokenizer.from_pretrained("Salesforce/codet5p-220m")
-t5_model = AutoModelForSeq2SeqLM.from_pretrained("Salesforce/codet5p-220m")
-t5_model.to("cuda" if torch.cuda.is_available() else "cpu")
-
-# Load StarCoderBase for theory question generation
-starcoder_tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-base")
-starcoder_model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-base")
-starcoder_model.to("cuda" if torch.cuda.is_available() else "cpu")
-
 # Load deepseek model for code optimization and question generation
 MODEL_NAME = "deepseek-ai/deepseek-coder-1.3b-instruct"
 device = 0 if torch.cuda.is_available() else -1
@@ -410,14 +400,6 @@ error_keys = list(error_dict.keys())
 embed_model = SentenceTransformer("all-MiniLM-L6-v2")
 error_embeddings = embed_model.encode(error_keys, convert_to_tensor=True)
 
-# Load DeepSeek LLM
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model_id = "deepseek-ai/deepseek-coder-1.3b-instruct"
-tokenizer = AutoTokenizer.from_pretrained(model_id)
-llm_model = AutoModelForCausalLM.from_pretrained(
-    model_id, device_map="auto", torch_dtype=torch.float16
-)
-
 # Rule-based error shortcut
 def rule_based_match(error_msg: str) -> str:
     if "SyntaxError" in error_msg:
@@ -471,7 +453,7 @@ def generate_llm_explanation(error_msg: str, user_level: str) -> str:
         prompt = f"Explain briefly what's wrong here: {error_msg}"
 
     inputs = tokenizer(prompt, return_tensors="pt").to(llm_model.device)
-    outputs = llm_model.generate(**inputs, max_new_tokens=256)
+    outputs = model.generate(**inputs, max_new_tokens=256)
     return tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
 
 # Master explanation function
