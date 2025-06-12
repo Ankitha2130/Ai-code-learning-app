@@ -393,17 +393,106 @@ def generate_questions_api():
     questions = generate_theory_questions(code)
     return jsonify({'questions': questions})
 
+from flask import Flask, request, jsonify
+import json
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from sentence_transformers import SentenceTransformer, util
+
+app = Flask(__name__)
+
+# Load explanation dataset
+with open("error_explanations.json", "r") as f:
+    error_dict = json.load(f)
+error_keys = list(error_dict.keys())
+
+# Load semantic search model
+embed_model = SentenceTransformer("all-MiniLM-L6-v2")
+error_embeddings = embed_model.encode(error_keys, convert_to_tensor=True)
+
+# Load DeepSeek LLM
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model_id = "deepseek-ai/deepseek-coder-1.3b-instruct"
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+llm_model = AutoModelForCausalLM.from_pretrained(
+    model_id, device_map="auto", torch_dtype=torch.float16
+)
+
+# Rule-based error shortcut
+def rule_based_match(error_msg: str) -> str:
+    if "SyntaxError" in error_msg:
+        return "You're likely missing a colon, quote, or bracket."
+    if "TypeError" in error_msg:
+        return "You're using incompatible types in an operation."
+    if "NameError" in error_msg:
+        return "You're referring to a variable that was not defined."
+    if "IndexError" in error_msg:
+        return "You're trying to access an index that doesn't exist in the list."
+    return ""
+
+# Semantic search match
+def semantic_match(error_msg: str, threshold=0.6) -> str:
+    query_embedding = embed_model.encode(error_msg, convert_to_tensor=True)
+    cosine_scores = util.pytorch_cos_sim(query_embedding, error_embeddings)[0]
+    best_idx = torch.argmax(cosine_scores).item()
+    best_score = cosine_scores[best_idx].item()
+    if best_score >= threshold:
+        return error_dict[error_keys[best_idx]]
+    return ""
+
+# Classify error type
+def classify_error(error_msg: str) -> str:
+    if "SyntaxError" in error_msg:
+        return "Syntax"
+    elif "NameError" in error_msg:
+        return "Name"
+    elif "IndexError" in error_msg:
+        return "Index"
+    elif "TypeError" in error_msg:
+        return "Type"
+    elif "ValueError" in error_msg:
+        return "Value"
+    return "Unknown"
+
+# DeepSeek LLM fallback
+def generate_llm_explanation(error_msg: str, user_level: str) -> str:
+    category = classify_error(error_msg)
+    if user_level == "Beginner":
+        prompt = (
+            f"You are a Python tutor. This is a {category} error. "
+            f"Explain in simple terms with example and fix:\n\n{error_msg}"
+        )
+    elif user_level == "Intermediate":
+        prompt = (
+            f"You are an expert Python developer. This is a {category} error. "
+            f"Explain the cause and suggest how to fix it:\n\n{error_msg}"
+        )
+    else:
+        prompt = f"Explain briefly what's wrong here: {error_msg}"
+
+    inputs = tokenizer(prompt, return_tensors="pt").to(llm_model.device)
+    outputs = llm_model.generate(**inputs, max_new_tokens=256)
+    return tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
+
+# Master explanation function
+def explain_error(code: str, error_msg: str, level: str) -> str:
+    rb = rule_based_match(error_msg)
+    if rb:
+        return rb
+    sm = semantic_match(error_msg)
+    if sm:
+        return sm
+    return generate_llm_explanation(error_msg, level)
+
+# Flask API route
 @app.route('/explain_error', methods=['POST'])
 def explain_error_api():
     data = request.get_json()
     code = data.get('code', '')
     error_message = data.get('error', '')
-    level=data.get('level','')
-    explanation = explain_error(code, error_message,level)
+    level = data.get('level', 'Beginner')
+    explanation = explain_error(code, error_message, level)
     return jsonify({'message': explanation})
-
-
-
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000)
