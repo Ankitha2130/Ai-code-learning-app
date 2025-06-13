@@ -506,6 +506,28 @@ def generate_questions_api():
     questions = generate_theory_questions(code)
     return jsonify({'questions': questions})
 
+import os
+from flask import Flask, request, jsonify, send_from_directory
+from pyflowchart import Flowchart
+
+@app.route('/generate_flowchart', methods=['POST'])
+def generate_flowchart_api():
+    data = request.get_json()
+    code = data.get('code', '')
+    
+    if not code.strip():
+        return jsonify({'error': 'No code provided'}), 400
+
+    try:
+        # Convert code to flowchart
+        fc = Flowchart.from_code(code)
+        flowchart_text = fc.flowchart()
+
+        # Save as text file or return directly
+        return jsonify({'flowchart': flowchart_text})
+    
+    except Exception as e:
+        return jsonify({'error': f'Error generating flowchart: {str(e)}'}), 500
 
 
 if __name__ == '__main__':
