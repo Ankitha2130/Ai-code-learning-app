@@ -11,3 +11,5 @@ sentencepiece
 flask_cors
 graphviz
 pyflowchart
+diagrams
+torch
