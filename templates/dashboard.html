@@ -138,7 +138,7 @@
             <button id="runBtn" onclick="runDashboardCode()" class="btn btn-success mt-3">▶️ Run Code</button>
             <button id="optimizeBtn" class="btn btn-info mt-2" onclick="optimizeCode()">✨ Optimize Code</button>
             <button id="generateTheoryBtn" class="btn btn-secondary ms-2" onclick="generateTheoryQuestions()">Generate Theory Questions</button>
-            <button id="flowchartBtn" class="btn btn-secondary ms-2" onclick="generateFlowchart()">Generate Flowchart</button>
+            <button id="flowchartBtn" class="btn btn-secondary ms-2" onclick="generateFlowchart()">🧭 Generate Flowchart</button>
             <div class="output-label">Output:</div>
             <pre id="output"></pre>
             <br>
@@ -167,6 +167,15 @@
         <pre id="optimizedResult">Loading...</pre>
         <button id="notationsBtn" class="btn btn-info" style="display:none;">📘 Notations</button>
         <button id="replaceBtn" class="btn btn-primary mt-3">Replace in Editor</button>
+    </div>
+</div>
+<div id="flowchartModal" class="modal-content" role="dialog" aria-modal="true">
+    <span class="close-btn" onclick="closeFlowchartModal()" aria-label="Close">&times;</span>
+    <h5 id="flowchartModalTitle">🧭 Flowchart</h5>
+    <pre id="flowchartResult">Loading...</pre>
+    <div class="modal-footer">
+        <button id="notationsBtn" class="btn btn-info">📘 Notations</button>
+        <button class="btn btn-secondary" onclick="closeFlowchartModal()">Close</button>
     </div>
 </div>
 
@@ -344,6 +353,43 @@
     .finally(() => setLoading(generateTheoryBtn, false));
 }
 
+function generateFlowchart() {
+    const code = editor.getValue().trim();
+    if (!code) {
+        modalContent.innerText = "⚠️ Please enter code first.";
+        openModal();
+        return;
+    }
+
+    document.getElementById("flowchartModalTitle").innerText = "🧭 Generating Flowchart...";
+    document.getElementById("flowchartResult").innerText = "⏳ Generating flowchart, please wait...";
+    openFlowchartModal();
+
+    fetch("/generate_flowchart", {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.flowchart) {
+            document.getElementById("flowchartResult").innerText = data.flowchart;
+        } else {
+            document.getElementById("flowchartResult").innerText = data.error || "⚠️ No flowchart generated.";
+        }
+    })
+    .catch(error => {
+        document.getElementById("flowchartResult").innerText = "⚠️ Error generating flowchart: " + error.message;
+    });
+}
+
+function openFlowchartModal() {
+    document.getElementById("flowchartModal").style.display = "block";
+}
+
+function closeFlowchartModal() {
+    document.getElementById("flowchartModal").style.display = "none";
+}
 
 </script>
 </body>
