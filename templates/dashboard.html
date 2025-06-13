@@ -344,7 +344,7 @@
     .finally(() => setLoading(generateTheoryBtn, false));
 }
 
-function openFlowchartTab() {
+function openFlowchart() {
     const code = editor.getValue().trim();
     if (!code) {
         alert("⚠️ Please write some code before generating the flowchart.");
