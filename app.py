@@ -352,23 +352,6 @@ def explain_error(code: str, error_message: str, level: str) -> str:
 import ast
 import graphviz
 
-def generate_flowchart(code, output_dir='static/flowchart'):
-    parsed = ast.parse(code)
-    dot = graphviz.Digraph()
-
-    def walk(node, parent=None):
-        name = f"{node.__class__.__name__}_{id(node)}"
-        dot.node(name, node.__class__.__name__)
-        if parent:
-            dot.edge(parent, name)
-        for child in ast.iter_child_nodes(node):
-            walk(child, name)
-
-    walk(parsed)
-    filename = f"{output_dir}/flowchart_{hash(code)}"
-    dot.render(filename, format='png', cleanup=True)
-    return f"{filename}.png"
-
 
 # Run Code (Skill)
 @app.route('/run_code_skill', methods=['POST'])
@@ -508,25 +491,48 @@ def generate_theory_questions_api():
         'questions': questions
     })
 
+import uuid
+import pyflowchart
+from flask import Flask, request, jsonify
+
+# Flowchart generation logic
+def generate_flowchart(code, output_folder='static/flowchart'):
+    try:
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        js_code = pyflowchart.Flowchart.from_code(code)
+        flowchart_code = js_code.flowchart()
+
+        file_id = str(uuid.uuid4())
+        flowchart_path = os.path.join(output_folder, f'{file_id}.txt')
+        with open(flowchart_path, 'w') as f:
+            f.write(flowchart_code)
+
+        return f"{output_folder}/{file_id}.txt"
+    except Exception as e:
+        return None
+
 @app.route('/generate_flowchart', methods=['POST'])
 def generate_flowchart_api():
     data = request.get_json()
     code = data.get('code', '')
 
-    if not code.strip():
-        return jsonify({'error': 'Code is empty'}), 400
-
-    flowchart_path = generate_flowchart(code, 'static/flowchart')
-    return jsonify({'flowchart_url': f"/{flowchart_path}"})
+    flowchart_file_path = generate_flowchart(code)
+    if flowchart_file_path:
+        return jsonify({'flowchart_url': f"/{flowchart_file_path}"})
+    else:
+        return jsonify({'error': 'Failed to generate flowchart'}), 500
 
 @app.route('/get_notations', methods=['GET'])
 def get_notations():
     try:
-        with open("flowchart_explanation.txt", "r") as file:
+        with open('notations.txt', 'r') as file:
             content = file.read()
         return jsonify({'content': content})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except:
+        return jsonify({'error': 'File not found'}), 404
+
 
 
 if __name__ == '__main__':
