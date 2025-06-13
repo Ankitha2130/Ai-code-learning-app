@@ -457,7 +457,7 @@ def generate_llm_explanation(error_msg: str, user_level: str) -> str:
     return tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
 
 # Master explanation function
-def explain_error(code: str, error_msg: str, level: str) -> str:
+def explain_error1(code: str, error_msg: str, level: str) -> str:
     rb = rule_based_match(error_msg)
     if rb:
         return generate_llm_explanation(error_msg, level)
