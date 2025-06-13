@@ -313,25 +313,19 @@
     if (!code) {
         modalContent.innerText = "⚠️ Please type your code to generate theory questions.";
         replaceBtn.style.display = "none";
-        document.getElementById("notationsBtn").style.display = "none";
         openModal();
         return;
     }
-
     document.getElementById("optimizeModalTitle").innerText = "🧠 Theory Questions";
     modalContent.innerText = "⏳ Generating theory questions, please wait...";
     replaceBtn.style.display = "none";
     openModal();
-    setLoading(generateTheoryBtn, true);
-
-    // Default difficulty — you can change this or make it dynamic from UI
-    const difficulty = "medium";
-
+    setLoading(generateTheoryBtn, true); // Optional: if you have a spinner
     console.log("Sending code to backend:", code);
-    fetch("/generate_theory_questions", {
+    fetch("/generate_questions", {
         method: "POST",
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: code, difficulty: difficulty })
+        body: JSON.stringify({ code: code })
     })
     .then(response => response.json())
     .then(data => {
