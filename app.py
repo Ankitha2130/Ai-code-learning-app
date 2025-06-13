@@ -317,36 +317,27 @@ def optimize_code(code: str) -> str:
 
         
 def generate_theory_questions(code: str, concepts: list[str], difficulty: str = "medium") -> str:
-    # Create a comma-separated list of DSA concepts
     concept_str = ", ".join(concepts) if concepts else "general Python programming"
-
-    # Define prompt with difficulty level
     prompt = f"""
-        You are a Python expert. Analyze the following Python code and generate 5 theory-based questions about the key DSA concepts involved ({concept_str}). 
-        Each question should be at the {difficulty} level and include the correct answer.
+You are a Python expert. Analyze the following Python code and generate 5 theory-based questions about the key DSA concepts involved ({concept_str}).
+Each question should be at the {difficulty} level and include the correct answer.
 
-        Code:
-            {code}
+Code:
+{code}
 
-        Questions and Answers:
-        """
-
+Questions and Answers:
+"""
     try:
         inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-
         outputs = model.generate(
             **inputs,
             max_length=700,
             do_sample=False,
             pad_token_id=tokenizer.eos_token_id
         )
-        full_output = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        return full_output[len(prompt):].strip()
-
+        return tokenizer.decode(outputs[0], skip_special_tokens=True).strip()[len(prompt):]
     except Exception as e:
         return f"Error generating questions: {e}"
-
-
 
 def explain_error(code: str, error_message: str, level: str) -> str:
     prompt = f"""Analyze the following Python code and error. Then do two things:
@@ -376,6 +367,25 @@ def explain_error(code: str, error_message: str, level: str) -> str:
     except Exception as e:
         return f"⚠️ Error explaining the error: {e}"
 
+import ast
+import graphviz
+
+def generate_flowchart(code, output_dir='static/flowchart'):
+    parsed = ast.parse(code)
+    dot = graphviz.Digraph()
+
+    def walk(node, parent=None):
+        name = f"{node.__class__.__name__}_{id(node)}"
+        dot.node(name, node.__class__.__name__)
+        if parent:
+            dot.edge(parent, name)
+        for child in ast.iter_child_nodes(node):
+            walk(child, name)
+
+    walk(parsed)
+    filename = f"{output_dir}/flowchart_{hash(code)}"
+    dot.render(filename, format='png', cleanup=True)
+    return f"{filename}.png"
 
 
 # Run Code (Skill)
@@ -503,21 +513,34 @@ def explain_error_api():
 def generate_theory_questions_api():
     data = request.get_json()
     code = data.get('code', '')
+    difficulty = data.get('difficulty', 'medium')
 
     if not code.strip():
-        return jsonify({'error': 'Code input is empty'}), 400
+        return jsonify({'error': 'Code is empty'}), 400
 
-    # Detect DSA concepts
+    # Detect concepts (you must have this function or dummy return list)
     detected_concepts = classify_concepts(code)
 
-    # Generate theory questions
-    questions = generate_theory_questions(code, detected_concepts)
+    # Generate theory questions using DeepSeek
+    questions = generate_theory_questions(code, detected_concepts, difficulty)
 
     return jsonify({
         'concepts': detected_concepts,
         'questions': questions
     })
 
+@app.route('/generate_flowchart', methods=['POST'])
+def generate_flowchart_api():
+    data = request.get_json()
+    code = data.get('code', '')
+
+    if not code.strip():
+        return jsonify({'error': 'Code is empty'}), 400
+
+    # Save flowchart to static/flowchart folder
+    flowchart_path = generate_flowchart(code, 'static/flowchart')
+
+    return jsonify({'flowchart_url': f"/{flowchart_path}"})
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000)
