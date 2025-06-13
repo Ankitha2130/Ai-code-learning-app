@@ -308,7 +308,8 @@
         document.body.classList.remove("modal-open");
     }
 
-  function generateTheoryQuestions() {
+  
+    function generateTheoryQuestions() {
     const code = editor.getValue().trim();
     if (!code) {
         modalContent.innerText = "⚠️ Please type your code to generate theory questions.";
@@ -343,6 +344,9 @@
     .finally(() => setLoading(generateTheoryBtn, false));
 }
 
+
+// Attach event listener
+document.getElementById("generateTheoryBtn").addEventListener("click", generateTheoryQuestions);
     function generateFlowchart() {
     const code = editor.getValue().trim();
     if (!code) {
