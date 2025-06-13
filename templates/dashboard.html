@@ -345,7 +345,7 @@
 // Attach event listener
 document.getElementById("generateTheoryBtn").addEventListener("click", generateTheoryQuestions);
 document.getElementById("flowchartBtn").addEventListener("click", async () => {
-    const code = document.getElementById("codeInput").value;
+    const code = editor.getValue().trim();
 
     const res = await fetch("/generate_flowchart", {
         method: "POST",
