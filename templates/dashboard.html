@@ -345,42 +345,6 @@
 }
 
 
-// Attach event listener
-document.getElementById("generateTheoryBtn").addEventListener("click", generateTheoryQuestions);
-    function generateFlowchart() {
-    const code = editor.getValue().trim();
-    if (!code) {
-        modalContent.innerText = "⚠️ Please enter some code.";
-        replaceBtn.style.display = "none";
-        openModal();
-        return;
-    }
-
-    document.getElementById("optimizeModalTitle").innerText = "📊 Flowchart";
-    modalContent.innerText = "⏳ Generating flowchart...";
-    replaceBtn.style.display = "none";
-    openModal();
-
-    fetch("/generate_flowchart", {
-        method: "POST",
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: code })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.image_url) {
-            modalContent.innerHTML = `<img src="${data.image_url}" alt="Flowchart" style="max-width:100%;">`;
-        } else {
-            modalContent.innerText = data.error || "⚠️ Failed to generate flowchart.";
-        }
-    })
-    .catch(error => {
-        modalContent.innerText = "⚠️ Error: " + error.message;
-    });
-}
-
-
-
 </script>
 </body>
 </html>
