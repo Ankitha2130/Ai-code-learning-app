@@ -332,22 +332,14 @@
     })
     .then(response => response.json())
     .then(data => {
-        if (data.error) {
-            modalContent.innerText = `⚠️ ${data.error}`;
-        } else {
-            const questionText = data.questions || "⚠️ No questions generated.";
-            const conceptText = data.concepts?.join(", ") || "None detected";
-
-            modalContent.innerHTML = `
-                <strong>🔍 Detected DSA Concepts:</strong> ${conceptText}<br><br>
-                <strong>❓ Theory Questions:</strong><br><pre style="white-space:pre-wrap;">${questionText}</pre>
-            `;
-        }
+        modalContent.innerText = data.questions || "⚠️ No questions generated.";
         replaceBtn.style.display = "inline-block";
-        replaceBtn.onclick = () => closeModal();
+        replaceBtn.onclick = () => {
+            closeModal();
+        };
     })
     .catch(error => {
-        modalContent.innerText = `⚠️ Error generating questions. ${error.message}`;
+        modalContent.innerText = `⚠️ Error generating questions.${error.message}`;
         replaceBtn.style.display = "none";
         console.error("Question generation error:", error);
     })
