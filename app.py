@@ -324,41 +324,42 @@ def generate_theory_questions(code: str) -> str:
 def explain_error(code: str, error_message: str, level: str) -> str:
     if level == "Beginner":
         prompt = f"""Analyze the following Python code and error. Then do three things:
-                1. Explain the error clearly (as if teaching a {level} student).
-                2. Provide an example for illustration.
-                3. Provide a correct version of the code.
+1. Explain the error clearly (as if teaching a {level} student).
+2. Provide an example for illustration.
+3. Provide a correct version of the code.
 
-                Code:
-                {code}
+Code:
+{code}
 
-                Error:
-                {error_message}
-            """
+Error:
+{error_message}
+"""
     elif level == "Intermediate":
         prompt = f"""Analyze the following Python code and error. Then do two things:
-                1. Explain the error clearly (as if teaching a {level} student).
-                2. Provide a correct version of the code.
+1. Explain the error clearly (as if teaching a {level} student).
+2. Provide a correct version of the code.
 
-                Code:
-                {code}
+Code:
+{code}
 
-                Error:
-                {error_message}
-            """
+Error:
+{error_message}
+"""
     else:
         prompt = f"""Analyze the following Python code and error. Then do two things:
-                1. Explain the error clearly (as if teaching a {level} student).
-                2. Provide a correct version of the code.
+1. Explain the error clearly (as if teaching a {level} student).
+2. Provide a correct version of the code.
 
-                Code:
-                {code}
+Code:
+{code}
 
-                Error:
-                {error_message}
-            """
+Error:
+{error_message}
+"""
+
     try:
         inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-        
+
         outputs = model.generate(
             **inputs,
             max_length=500,
@@ -368,6 +369,7 @@ def explain_error(code: str, error_message: str, level: str) -> str:
         generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
         message = generated_text[len(prompt):].strip()
         return message
+
     except Exception as e:
         return f"⚠️ Error explaining the error: {e}"
 
