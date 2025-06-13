@@ -344,6 +344,19 @@
 
 // Attach event listener
 document.getElementById("generateTheoryBtn").addEventListener("click", generateTheoryQuestions);
+document.getElementById("flowchartBtn").addEventListener("click", async () => {
+    const code = document.getElementById("codeInput").value;
+
+    const res = await fetch("/generate_flowchart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code })
+    });
+
+    const data = await res.json();
+    document.getElementById("flowchartImage").src = data.flowchart_url;
+});
+
 
 </script>
 </body>
