@@ -502,7 +502,7 @@ def generate_theory_questions_api():
     # Detect concepts (you must have this function or dummy return list)
 
     # Generate theory questions using DeepSeek
-    questions = generate_theory_questions(code, detected_concepts, difficulty)
+    questions = generate_theory_questions(code, difficulty)
 
     return jsonify({
         'questions': questions
