@@ -484,76 +484,81 @@ def generate_questions_api():
     questions = generate_theory_questions(code)
     return jsonify({'questions': questions})
 
-import uuid
-import pyflowchart
-from flask import Flask, request, jsonify
 
 from graphviz import Digraph
-import os
 import uuid
 
-def generate_flowchart(code_text, save_dir='static/flowchart'):
-    os.makedirs(save_dir, exist_ok=True)
+import ast
 
-    # Create a unique filename
-    filename = f"flowchart_{uuid.uuid4().hex[:8]}"
-    filepath = os.path.join(save_dir, filename)
+def code_to_flowchart_dsl(code: str) -> str:
+    try:
+        tree = ast.parse(code)
+    except SyntaxError as e:
+        return f"# Invalid Python code: {e}"
 
-    # Create a directed graph
-    dot = Digraph(format='png')
-    dot.attr(rankdir='TB')  # Top to bottom
+    lines = []
+    counter = {'start': 1, 'cond': 1, 'io': 1, 'end': 1}
+    arrows = []
 
-    # Sample parsed lines from text-based format (you can pass this text directly)
-    lines = code_text.strip().split('\n')
-    nodes = {}
+    def node_id(prefix):
+        counter[prefix] += 1
+        return f"{prefix}{counter[prefix]}"
 
-    for line in lines:
-        if '=>' in line:
-            key, rest = line.split('=>')
-            label_type, label_text = rest.split(':', 1)
-            label_text = label_text.strip()
+    def walk(node, parent=None):
+        if isinstance(node, ast.FunctionDef):
+            start = f"st{counter['start']}: start: Start {node.name}"
+            lines.append(start)
+            last_id = f"st{counter['start']}"
+            for stmt in node.body:
+                nid, flow = walk(stmt, last_id)
+                arrows.append(f"{last_id}->{nid}")
+                last_id = nid
+            eid = node_id('end')
+            lines.append(f"{eid}=>end: End Function")
+            arrows.append(f"{last_id}->{eid}")
+            return eid, lines
 
-            shape = {
-                'start': 'circle',
-                'end': 'doublecircle',
-                'condition': 'diamond',
-                'inputoutput': 'parallelogram'
-            }.get(label_type.strip(), 'box')
+        elif isinstance(node, ast.If):
+            cond_id = node_id('cond')
+            lines.append(f"{cond_id}=>condition: if {ast.unparse(node.test)}")
+            for stmt in node.body:
+                tid, _ = walk(stmt, cond_id)
+                arrows.append(f"{cond_id}(yes)->{tid}")
+            for stmt in node.orelse:
+                fid, _ = walk(stmt, cond_id)
+                arrows.append(f"{cond_id}(no)->{fid}")
+            return cond_id, lines
 
-            dot.node(key.strip(), label_text, shape=shape)
-            nodes[key.strip()] = True
+        elif isinstance(node, ast.Return):
+            rid = node_id('io')
+            lines.append(f"{rid}=>inputoutput: return {ast.unparse(node.value)}")
+            return rid, lines
 
-        elif '->' in line:
-            src, dst = [x.strip() for x in line.split('->')]
-            dot.edge(src, dst)
+        elif isinstance(node, ast.Expr):
+            eid = node_id('io')
+            lines.append(f"{eid}=>inputoutput: {ast.unparse(node)}")
+            return eid, lines
 
-    # Save to file
-    dot.render(filepath, cleanup=True)
-    return f"{filepath}.png"
+        else:
+            iid = node_id('io')
+            lines.append(f"{iid}=>inputoutput: {ast.unparse(node)}")
+            return iid, lines
+
+    walk(tree.body[0]) if tree.body else None
+    return "\n".join(lines + arrows)
 
 @app.route('/generate_flowchart', methods=['POST'])
 def generate_flowchart_api():
     data = request.get_json()
-    flow_text = data.get('flow_text', '')
-    
-    if not flow_text:
-        return jsonify({"error": "No flowchart text provided"}), 400
-
+    code = data.get('code', '')
+    if not code:
+        return jsonify({"error": "Code is empty"}), 400
     try:
-        img_path = generate_flowchart(flow_text)
-        return jsonify({"flowchart_url": '/' + img_path})
+        flow_text = code_to_flowchart_dsl(code)
+        image_path = generate_flowchart(flow_text)
+        return jsonify({"image_url": '/' + image_path})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-
-@app.route('/get_notations', methods=['GET'])
-def get_notations():
-    try:
-        with open('notations.txt', 'r') as file:
-            content = file.read()
-        return jsonify({'content': content})
-    except:
-        return jsonify({'error': 'File not found'}), 404
 
 
 
