@@ -298,8 +298,7 @@ def optimize_code(code: str) -> str:
     except Exception as e:
         return f"Error optimizing code: {e}"
 
-        
-def generate_theory_questions(code: str, difficulty: str = "medium") -> str:
+def generate_theory_questions(code: str) -> str:
     prompt = f"""
         You are a Python expert. Analyze the following Python code and detect the Data Structures and Algorithms concepts involved and generate 5 theory-based questions about the key DSA concepts involved ({concept_str}).
         Each question should be at the {difficulty} level and include the correct answer.
@@ -311,13 +310,17 @@ def generate_theory_questions(code: str, difficulty: str = "medium") -> str:
     """
     try:
         inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+        
         outputs = model.generate(
             **inputs,
-            max_length=700,
+            max_length=500,
             do_sample=False,
             pad_token_id=tokenizer.eos_token_id
         )
-        return tokenizer.decode(outputs[0], skip_special_tokens=True).strip()[len(prompt):]
+        full_output = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        questions = full_output[len(prompt):].strip()
+        return questions
+
     except Exception as e:
         return f"Error generating questions: {e}"
 
@@ -473,45 +476,61 @@ def explain_error_api():
     explanation = explain_error(code, error_message, level)
     return jsonify({'message': explanation})
 
-@app.route('/generate_theory_questions', methods=['POST'])
-def generate_theory_questions_api():
+
+@app.route('/generate_questions', methods=['POST'])
+def generate_questions_api():
     data = request.get_json()
     code = data.get('code', '')
-    difficulty = data.get('difficulty', 'medium')
-
-    if not code.strip():
-        return jsonify({'error': 'Code is empty'}), 400
-
-    # Detect concepts (you must have this function or dummy return list)
-
-    # Generate theory questions using DeepSeek
-    questions = generate_theory_questions(code, difficulty)
-
-    return jsonify({
-        'questions': questions
-    })
+    questions = generate_theory_questions(code)
+    return jsonify({'questions': questions})
 
 import uuid
 import pyflowchart
 from flask import Flask, request, jsonify
 
-# Flowchart generation logic
-def generate_flowchart(code, output_folder='static/flowchart'):
-    try:
-        if not os.path.exists(output_folder):
-            os.makedirs(output_folder)
+from graphviz import Digraph
+import os
+import uuid
 
-        js_code = pyflowchart.Flowchart.from_code(code)
-        flowchart_code = js_code.flowchart()
+def generate_flowchart(code_text, save_dir='static/flowchart'):
+    os.makedirs(save_dir, exist_ok=True)
 
-        file_id = str(uuid.uuid4())
-        flowchart_path = os.path.join(output_folder, f'{file_id}.txt')
-        with open(flowchart_path, 'w') as f:
-            f.write(flowchart_code)
+    # Create a unique filename
+    filename = f"flowchart_{uuid.uuid4().hex[:8]}"
+    filepath = os.path.join(save_dir, filename)
 
-        return f"{output_folder}/{file_id}.txt"
-    except Exception as e:
-        return None
+    # Create a directed graph
+    dot = Digraph(format='png')
+    dot.attr(rankdir='TB')  # Top to bottom
+
+    # Sample parsed lines from text-based format (you can pass this text directly)
+    lines = code_text.strip().split('\n')
+    nodes = {}
+
+    for line in lines:
+        if '=>' in line:
+            key, rest = line.split('=>')
+            label_type, label_text = rest.split(':', 1)
+            label_text = label_text.strip()
+
+            shape = {
+                'start': 'circle',
+                'end': 'doublecircle',
+                'condition': 'diamond',
+                'inputoutput': 'parallelogram'
+            }.get(label_type.strip(), 'box')
+
+            dot.node(key.strip(), label_text, shape=shape)
+            nodes[key.strip()] = True
+
+        elif '->' in line:
+            src, dst = [x.strip() for x in line.split('->')]
+            dot.edge(src, dst)
+
+    # Save to file
+    dot.render(filepath, cleanup=True)
+    return f"{filepath}.png"
+
 
 @app.route('/generate_flowchart', methods=['POST'])
 def generate_flowchart_api():
