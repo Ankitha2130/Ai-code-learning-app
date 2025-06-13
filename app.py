@@ -26,6 +26,9 @@ from transformers import pipeline
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline,AutoModelForSeq2SeqLM
 from flask_ngrok import run_with_ngrok
+import os
+from flask import Flask, request, jsonify, send_file
+from flowchart_generator import generate_flowchart
 
 # Load deepseek model for code optimization and question generation
 MODEL_NAME = "deepseek-ai/deepseek-coder-1.3b-instruct"
@@ -61,6 +64,23 @@ def register():
     if request.method == 'POST':
         return redirect(url_for('login'))
     return render_template('register.html')
+
+@app.route('/generate_flowchart', methods=['POST'])
+def generate_flowchart_api():
+    data = request.get_json()
+    code = data.get('code', '')
+
+    if not code.strip():
+        return jsonify({"error": "No code provided"}), 400
+
+    try:
+        output_path = 'static/flowchart'
+        os.makedirs('static', exist_ok=True)
+        image_path = generate_flowchart(code, output_path)
+
+        return jsonify({'flowchart_url': f"/{image_path}"})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/dashboard')
 def dashboard():
