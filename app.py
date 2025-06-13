@@ -316,26 +316,36 @@ def optimize_code(code: str) -> str:
         return f"Error optimizing code: {e}"
 
         
-def generate_theory_questions(code: str) -> str:
-    prompt = f"""Analyze the following Python function and generate 5 theory-based questions about the concepts used in this code example recursion. Provide correct answers.
-                Code:
-                {code}
-            """
+def generate_theory_questions(code: str, concepts: list[str], difficulty: str = "medium") -> str:
+    # Create a comma-separated list of DSA concepts
+    concept_str = ", ".join(concepts) if concepts else "general Python programming"
+
+    # Define prompt with difficulty level
+    prompt = f"""
+        You are a Python expert. Analyze the following Python code and generate 5 theory-based questions about the key DSA concepts involved ({concept_str}). 
+        Each question should be at the {difficulty} level and include the correct answer.
+
+        Code:
+            {code}
+
+        Questions and Answers:
+        """
+
     try:
         inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-        
+
         outputs = model.generate(
             **inputs,
-            max_length=500,
+            max_length=700,
             do_sample=False,
             pad_token_id=tokenizer.eos_token_id
         )
         full_output = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        questions = full_output[len(prompt):].strip()
-        return questions
+        return full_output[len(prompt):].strip()
 
     except Exception as e:
         return f"Error generating questions: {e}"
+
 
 
 def explain_error(code: str, error_message: str, level: str) -> str:
@@ -395,13 +405,6 @@ def optimize_code_api():
     code = data.get('code', '')
     optimized = optimize_code(code)
     return jsonify({'optimized_code': optimized})
-
-@app.route('/generate_questions', methods=['POST'])
-def generate_questions_api():
-    data = request.get_json()
-    code = data.get('code', '')
-    questions = generate_theory_questions(code)
-    return jsonify({'questions': questions})
 
 from flask import Flask, request, jsonify
 import json
@@ -495,6 +498,26 @@ def explain_error_api():
     level = data.get('level', 'Beginner')
     explanation = explain_error(code, error_message, level)
     return jsonify({'message': explanation})
+
+@app.route('/generate_theory_questions', methods=['POST'])
+def generate_theory_questions_api():
+    data = request.get_json()
+    code = data.get('code', '')
+
+    if not code.strip():
+        return jsonify({'error': 'Code input is empty'}), 400
+
+    # Detect DSA concepts
+    detected_concepts = classify_concepts(code)
+
+    # Generate theory questions
+    questions = generate_theory_questions(code, detected_concepts)
+
+    return jsonify({
+        'concepts': detected_concepts,
+        'questions': questions
+    })
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000)
