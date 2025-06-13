@@ -300,8 +300,8 @@ def optimize_code(code: str) -> str:
 
 def generate_theory_questions(code: str) -> str:
     prompt = f"""
-        You are a Python expert. Analyze the following Python code and detect the Data Structures and Algorithms concepts involved and generate 5 theory-based questions about the key DSA concepts involved ({concept_str}).
-        Each question should be at the {difficulty} level and include the correct answer.
+        You are a Python expert. Analyze the following Python code and detect the Data Structures and Algorithms concepts involved and generate 5 theory-based questions about the key DSA concepts involved.
+        Each question should include the correct answer.
 
         Code:
             {code}
@@ -320,8 +320,9 @@ def generate_theory_questions(code: str) -> str:
         full_output = tokenizer.decode(outputs[0], skip_special_tokens=True)
         questions = full_output[len(prompt):].strip()
         return questions
+
     except Exception as e:
-        return f"⚠️ Error explaining the error: {e}"
+        return f"Error generating questions: {e}"
 
 def explain_error(code: str, error_message: str, level: str) -> str:
     if level == "Beginner":
@@ -500,7 +501,6 @@ def explain_error_api():
     level = data.get('level', 'Beginner')
     explanation = explain_error(code, error_message, level)
     return jsonify({'message': explanation})
-
 
 @app.route('/generate_questions', methods=['POST'])
 def generate_questions_api():
