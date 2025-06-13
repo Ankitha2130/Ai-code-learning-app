@@ -165,6 +165,7 @@
 
         <h5 id="optimizeModalTitle">🚀 Optimized Code</h5>
         <pre id="optimizedResult">Loading...</pre>
+        <button id="notationsBtn" class="btn btn-info" style="display:none;">📘 Notations</button>
         <button id="replaceBtn" class="btn btn-primary mt-3">Replace in Editor</button>
     </div>
 </div>
@@ -264,6 +265,7 @@
     }
     modalContent.innerText = "⏳ Optimizing code, please wait...";
     replaceBtn.style.display = "none";
+    document.getElementById("notationsBtn").style.display = "none";
     openModal();
     setLoading(optimizeBtn, true);
     console.log("Sending code to backend:", code);
@@ -311,6 +313,7 @@
     if (!code) {
         modalContent.innerText = "⚠️ Please type your code to generate theory questions.";
         replaceBtn.style.display = "none";
+        document.getElementById("notationsBtn").style.display = "none";
         openModal();
         return;
     }
@@ -351,6 +354,7 @@ function generateFlowchart() {
     if (!code) {
         modalContent.innerText = "⚠️ Please type your code to generate a flowchart.";
         replaceBtn.style.display = "none";
+        document.getElementById("notationsBtn").style.display = "inline-block";  // Show it
         openModal();
         return;
     }
@@ -358,6 +362,7 @@ function generateFlowchart() {
     document.getElementById("optimizeModalTitle").innerText = "🧩 Flowchart";
     modalContent.innerText = "⏳ Generating flowchart, please wait...";
     replaceBtn.style.display = "none";
+    document.getElementById("replaceBtn").style.display = "none";
     openModal();
     setLoading(flowchartBtn, true);
 
@@ -388,6 +393,23 @@ function generateFlowchart() {
     .finally(() => setLoading(flowchartBtn, false));
 }
 
+document.getElementById("notationsBtn").addEventListener("click", function () {
+    modalContent.innerText = "📖 Loading flowchart notations...";
+    document.getElementById("optimizeModalTitle").innerText = "📘 Flowchart Notations";
+
+    fetch("/get_notations")
+        .then(response => response.json())
+        .then(data => {
+            if (data.content) {
+                modalContent.innerText = data.content;
+            } else {
+                modalContent.innerText = "⚠️ Failed to load explanation.";
+            }
+        })
+        .catch(error => {
+            modalContent.innerText = "⚠️ Error loading notations: " + error.message;
+        });
+});
 
 
 
