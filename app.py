@@ -356,7 +356,6 @@ def explain_error(code: str, error_message: str, level: str) -> str:
                 Error:
                 {error_message}
             """
-
     try:
         inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
         
@@ -369,7 +368,6 @@ def explain_error(code: str, error_message: str, level: str) -> str:
         generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
         message = generated_text[len(prompt):].strip()
         return message
-
     except Exception as e:
         return f"⚠️ Error explaining the error: {e}"
 
