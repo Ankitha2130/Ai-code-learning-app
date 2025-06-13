@@ -422,7 +422,6 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from sentence_transformers import SentenceTransformer, util
 
-app = Flask(__name__)
 
 # Load explanation dataset
 with open("error_explanations.json", "r") as f:
