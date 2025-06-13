@@ -1,0 +1,31 @@
+🔵 **Start / End**
+   - Shape: Oval
+   - Meaning: Denotes the beginning or end of a process.
+
+⬛ **Process / Instruction**
+   - Shape: Rectangle
+   - Meaning: Represents an action, operation, or step in the program.
+
+🔷 **Decision / Condition**
+   - Shape: Diamond
+   - Meaning: Represents a condition with two or more outcomes (e.g., Yes/No, True/False).
+
+📦 **Input / Output**
+   - Shape: Parallelogram
+   - Meaning: Indicates an input to or output from the process (e.g., user input, print statements).
+
+🌀 **Loop / Iteration**
+   - Shape: Often represented using a Decision node with arrows looping back.
+   - Meaning: Represents repetition (e.g., `for`, `while` loops).
+
+🔄 **Connector**
+   - Shape: Small Circle
+   - Meaning: Used to connect different parts of the flowchart when it spans multiple pages or lines.
+
+➡️ **Arrow**
+   - Shape: Line with arrowhead
+   - Meaning: Shows the direction or flow of the process from one step to another.
+
+🧠 **Annotation**
+   - Shape: Bracket or side note
+   - Meaning: Used to add descriptive comments or explain steps in detail.
