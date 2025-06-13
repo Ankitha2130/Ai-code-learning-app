@@ -322,7 +322,7 @@ def generate_theory_questions(code: str) -> str:
         return questions
 
 def explain_error(code: str, error_message: str, level: str) -> str:
-    if level == "Beginnner":
+    if level == "Beginner":
         prompt = f"""Analyze the following Python code and error. Then do three things:
                 1. Explain the error clearly (as if teaching a {level} student).
                 2. Provide an example for illustration.
