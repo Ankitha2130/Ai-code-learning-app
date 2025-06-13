@@ -531,17 +531,20 @@ def generate_flowchart(code_text, save_dir='static/flowchart'):
     dot.render(filepath, cleanup=True)
     return f"{filepath}.png"
 
-
 @app.route('/generate_flowchart', methods=['POST'])
 def generate_flowchart_api():
     data = request.get_json()
-    code = data.get('code', '')
+    flow_text = data.get('flow_text', '')
+    
+    if not flow_text:
+        return jsonify({"error": "No flowchart text provided"}), 400
 
-    flowchart_file_path = generate_flowchart(code)
-    if flowchart_file_path:
-        return jsonify({'flowchart_url': f"/{flowchart_file_path}"})
-    else:
-        return jsonify({'error': 'Failed to generate flowchart'}), 500
+    try:
+        img_path = generate_flowchart(flow_text)
+        return jsonify({"flowchart_url": '/' + img_path})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/get_notations', methods=['GET'])
 def get_notations():
