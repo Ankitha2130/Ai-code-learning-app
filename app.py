@@ -25,7 +25,6 @@ from transformers import T5Tokenizer, T5ForConditionalGeneration
 from transformers import pipeline
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline,AutoModelForSeq2SeqLM
-from flask_ngrok import run_with_ngrok
 import os
 from flask import Flask, request, jsonify, send_file
 from flowchart_generator import generate_flowchart
