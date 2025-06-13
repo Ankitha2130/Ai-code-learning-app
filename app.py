@@ -519,6 +519,16 @@ def generate_flowchart_api():
     flowchart_path = generate_flowchart(code, 'static/flowchart')
     return jsonify({'flowchart_url': f"/{flowchart_path}"})
 
+@app.route('/get_notations', methods=['GET'])
+def get_notations():
+    try:
+        with open("flowchart_explanation.txt", "r") as file:
+            content = file.read()
+        return jsonify({'content': content})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000)
 
