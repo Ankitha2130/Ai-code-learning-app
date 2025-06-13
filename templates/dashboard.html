@@ -169,15 +169,7 @@
         <button id="replaceBtn" class="btn btn-primary mt-3">Replace in Editor</button>
     </div>
 </div>
-<div id="flowchartModal" class="modal-content" role="dialog" aria-modal="true">
-    <span class="close-btn" onclick="closeFlowchartModal()" aria-label="Close">&times;</span>
-    <h5 id="flowchartModalTitle">🧭 Flowchart</h5>
-    <pre id="flowchartResult">Loading...</pre>
-    <div class="modal-footer">
-        <button id="notationsBtn" class="btn btn-info">📘 Notations</button>
-        <button class="btn btn-secondary" onclick="closeFlowchartModal()">Close</button>
-    </div>
-</div>
+
 
 <!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
@@ -356,39 +348,26 @@
 function generateFlowchart() {
     const code = editor.getValue().trim();
     if (!code) {
-        modalContent.innerText = "⚠️ Please enter code first.";
-        openModal();
+        alert("⚠️ Please enter code to generate flowchart.");
         return;
     }
 
-    document.getElementById("flowchartModalTitle").innerText = "🧭 Generating Flowchart...";
-    document.getElementById("flowchartResult").innerText = "⏳ Generating flowchart, please wait...";
-    openFlowchartModal();
+    const newTab = window.open('', '_blank'); // Open blank tab immediately
 
-    fetch("/generate_flowchart", {
+    fetch("/view_flowchart", {
         method: "POST",
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: code })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.flowchart) {
-            document.getElementById("flowchartResult").innerText = data.flowchart;
-        } else {
-            document.getElementById("flowchartResult").innerText = data.error || "⚠️ No flowchart generated.";
-        }
+    .then(response => response.text())
+    .then(html => {
+        newTab.document.open();
+        newTab.document.write(html);
+        newTab.document.close();
     })
     .catch(error => {
-        document.getElementById("flowchartResult").innerText = "⚠️ Error generating flowchart: " + error.message;
+        newTab.document.write("<p>⚠️ Failed to generate flowchart: " + error.message + "</p>");
     });
-}
-
-function openFlowchartModal() {
-    document.getElementById("flowchartModal").style.display = "block";
-}
-
-function closeFlowchartModal() {
-    document.getElementById("flowchartModal").style.display = "none";
 }
 
 </script>
