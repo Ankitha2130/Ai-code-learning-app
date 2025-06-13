@@ -137,8 +137,8 @@
             <div id="editor" class="code-editor"></div>
             <button id="runBtn" onclick="runDashboardCode()" class="btn btn-success mt-3">▶️ Run Code</button>
             <button id="optimizeBtn" class="btn btn-info mt-2" onclick="optimizeCode()">✨ Optimize Code</button>
-            <button id="generateTheoryBtn" class="btn btn-secondary ms-2">Generate Theory Questions</button>
-            <button id="flowchartBtn" class="btn btn-secondary ms-2">Generate Flowchart</button>
+            <button id="generateTheoryBtn" class="btn btn-secondary ms-2" onclick="generateTheoryQuestions()">Generate Theory Questions</button>
+            <button id="flowchartBtn" class="btn btn-secondary ms-2" onclick="generateFlowchart()">Generate Flowchart</button>
             <div class="output-label">Output:</div>
             <pre id="output"></pre>
             <br>
@@ -306,7 +306,7 @@
         document.body.classList.remove("modal-open");
     }
 
-    function generateTheoryQuestions() {
+  function generateTheoryQuestions() {
     const code = editor.getValue().trim();
     if (!code) {
         modalContent.innerText = "⚠️ Please type your code to generate theory questions.";
@@ -314,48 +314,89 @@
         openModal();
         return;
     }
+
     document.getElementById("optimizeModalTitle").innerText = "🧠 Theory Questions";
     modalContent.innerText = "⏳ Generating theory questions, please wait...";
     replaceBtn.style.display = "none";
     openModal();
-    setLoading(generateTheoryBtn, true); // Optional: if you have a spinner
+    setLoading(generateTheoryBtn, true);
+
+    // Default difficulty — you can change this or make it dynamic from UI
+    const difficulty = "medium";
+
     console.log("Sending code to backend:", code);
-    fetch("/generate_questions", {
+    fetch("/generate_theory_questions", {
         method: "POST",
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: code })
+        body: JSON.stringify({ code: code, difficulty: difficulty })
     })
     .then(response => response.json())
     .then(data => {
-        modalContent.innerText = data.questions || "⚠️ No questions generated.";
+        if (data.error) {
+            modalContent.innerText = `⚠️ ${data.error}`;
+        } else {
+            const questionText = data.questions || "⚠️ No questions generated.";
+            const conceptText = data.concepts?.join(", ") || "None detected";
+
+            modalContent.innerHTML = `
+                <strong>🔍 Detected DSA Concepts:</strong> ${conceptText}<br><br>
+                <strong>❓ Theory Questions:</strong><br><pre style="white-space:pre-wrap;">${questionText}</pre>
+            `;
+        }
         replaceBtn.style.display = "inline-block";
-        replaceBtn.onclick = () => {
-            closeModal();
-        };
+        replaceBtn.onclick = () => closeModal();
     })
     .catch(error => {
-        modalContent.innerText = `⚠️ Error generating questions.${error.message}`;
+        modalContent.innerText = `⚠️ Error generating questions. ${error.message}`;
         replaceBtn.style.display = "none";
         console.error("Question generation error:", error);
     })
     .finally(() => setLoading(generateTheoryBtn, false));
 }
 
-
-// Attach event listener
-document.getElementById("generateTheoryBtn").addEventListener("click", generateTheoryQuestions);
-document.getElementById("flowchartBtn").addEventListener("click", async () => {
+function generateFlowchart() {
     const code = editor.getValue().trim();
+    if (!code) {
+        modalContent.innerText = "⚠️ Please type your code to generate a flowchart.";
+        replaceBtn.style.display = "none";
+        openModal();
+        return;
+    }
 
-    const res = await fetch("/generate_flowchart", {
+    document.getElementById("optimizeModalTitle").innerText = "🧩 Flowchart";
+    modalContent.innerText = "⏳ Generating flowchart, please wait...";
+    replaceBtn.style.display = "none";
+    openModal();
+    setLoading(flowchartBtn, true);
+
+    fetch("/generate_flowchart", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code })
-    });
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            modalContent.innerText = `⚠️ ${data.error}`;
+        } else {
+            const flowchartURL = data.flowchart_url;
+            modalContent.innerHTML = `
+                <strong>🧩 Generated Flowchart:</strong><br>
+                <img src="${flowchartURL}" alt="Flowchart" style="max-width: 100%; border: 1px solid #ccc; padding: 5px; border-radius: 8px;">
+            `;
+        }
+        replaceBtn.style.display = "inline-block";
+        replaceBtn.onclick = () => closeModal();
+    })
+    .catch(error => {
+        modalContent.innerText = `⚠️ Error generating flowchart. ${error.message}`;
+        replaceBtn.style.display = "none";
+        console.error("Flowchart generation error:", error);
+    })
+    .finally(() => setLoading(flowchartBtn, false));
+}
 
-    const data = await res.json();
-    document.getElementById("flowchartImage").src = data.flowchart_url;
-});
+
 
 
 </script>
