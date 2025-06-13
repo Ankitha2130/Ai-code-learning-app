@@ -346,27 +346,20 @@
 
 function openFlowchart() {
     const code = editor.getValue().trim();
-    if (!code) {
-        alert("⚠️ Please write some code before generating the flowchart.");
-        return;
-    }
+    if (!code) return alert("Please enter code first");
 
-    fetch("/view_flowchart", {
-        method: "POST",
+    fetch('/view_flowchart', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: code })
+        body: JSON.stringify({ code })
     })
-    .then(response => response.text())  // ← IMPORTANT
+    .then(res => res.text())
     .then(html => {
-        const newWindow = window.open("", "_blank");
-        newWindow.document.open();
-        newWindow.document.write(html);
-        newWindow.document.close();
+        const newTab = window.open();
+        newTab.document.write(html);
+        newTab.document.close();
     })
-    .catch(err => {
-        alert("⚠️ Flowchart generation failed.");
-        console.error("Flowchart Error:", err);
-    });
+    .catch(err => alert("Error generating flowchart: " + err));
 }
 
 </script>
