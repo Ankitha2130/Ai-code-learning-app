@@ -319,14 +319,14 @@ def optimize_code(code: str) -> str:
 def generate_theory_questions(code: str, concepts: list[str], difficulty: str = "medium") -> str:
     concept_str = ", ".join(concepts) if concepts else "general Python programming"
     prompt = f"""
-You are a Python expert. Analyze the following Python code and generate 5 theory-based questions about the key DSA concepts involved ({concept_str}).
-Each question should be at the {difficulty} level and include the correct answer.
+        You are a Python expert. Analyze the following Python code and detect the Data Structures and Algorithms concepts involved and generate 5 theory-based questions about the key DSA concepts involved ({concept_str}).
+        Each question should be at the {difficulty} level and include the correct answer.
 
-Code:
-{code}
+        Code:
+            {code}
 
-Questions and Answers:
-"""
+        Questions and Answers:
+    """
     try:
         inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
         outputs = model.generate(
@@ -537,9 +537,7 @@ def generate_flowchart_api():
     if not code.strip():
         return jsonify({'error': 'Code is empty'}), 400
 
-    # Save flowchart to static/flowchart folder
     flowchart_path = generate_flowchart(code, 'static/flowchart')
-
     return jsonify({'flowchart_url': f"/{flowchart_path}"})
 
 if __name__ == '__main__':
