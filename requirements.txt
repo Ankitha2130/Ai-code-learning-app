@@ -13,3 +13,4 @@ graphviz
 pyflowchart
 diagrams
 torch
+accelerate
