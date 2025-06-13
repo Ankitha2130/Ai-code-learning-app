@@ -510,10 +510,17 @@ def generate_questions_api():
 
 from flask import render_template_string
 
+from flask import Flask, request, render_template_string, jsonify
+import base64
+from graphviz import Digraph
+
 @app.route('/view_flowchart', methods=['POST'])
 def view_flowchart():
     data = request.get_json()
     code = data.get('code', '')
+
+    # You can later parse `code` to generate dynamic flowcharts
+    # For now, generate a static factorial flowchart
 
     dot = Digraph(format='png')
     dot.attr(rankdir='TB', size='8,5')
@@ -541,14 +548,16 @@ def view_flowchart():
     <html>
     <head>
         <title>Flowchart</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
     </head>
-    <body style="text-align:center;">
-        <h2>📈 Flowchart</h2>
-        <img src="data:image/png;base64,{encoded_img}" alt="Flowchart" style="max-width:90%; border:1px solid #ccc;">
+    <body style="text-align:center; font-family:sans-serif;">
+        <h2>📈 Generated Flowchart</h2>
+        <img src="data:image/png;base64,{encoded_img}" alt="Flowchart" style="max-width:90%; border:1px solid #ccc; padding:10px;">
     </body>
     </html>
     """
     return render_template_string(html_content)
+
 
 
 if __name__ == '__main__':
