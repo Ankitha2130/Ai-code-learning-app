@@ -343,55 +343,37 @@
     .finally(() => setLoading(generateTheoryBtn, false));
 }
 
-function generateFlowchart() {
+    function generateFlowchart() {
     const code = editor.getValue().trim();
     if (!code) {
-        modalContent.innerText = "⚠️ Please enter code to generate flowchart.";
+        modalContent.innerText = "⚠️ Please enter some code.";
         replaceBtn.style.display = "none";
         openModal();
         return;
     }
 
-    document.getElementById("optimizeModalTitle").innerText = "📘 Flowchart";
+    document.getElementById("optimizeModalTitle").innerText = "📊 Flowchart";
     modalContent.innerText = "⏳ Generating flowchart...";
     replaceBtn.style.display = "none";
     openModal();
 
-    fetch('/generate_flowchart', {
-        method: 'POST',
+    fetch("/generate_flowchart", {
+        method: "POST",
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: code })
     })
-    .then(response => response.json())
+    .then(res => res.json())
     .then(data => {
-        if (data.flowchart_url) {
-            fetch(data.flowchart_url)
-                .then(res => res.text())
-                .then(text => {
-                    modalContent.innerText = text;
-                });
+        if (data.image_url) {
+            modalContent.innerHTML = `<img src="${data.image_url}" alt="Flowchart" style="max-width:100%;">`;
         } else {
-            modalContent.innerText = data.error || "⚠️ Could not generate flowchart.";
+            modalContent.innerText = data.error || "⚠️ Failed to generate flowchart.";
         }
     })
-    .catch(err => {
-        modalContent.innerText = "⚠️ Flowchart generation error: " + err.message;
+    .catch(error => {
+        modalContent.innerText = "⚠️ Error: " + error.message;
     });
 }
-
-document.getElementById("notationsBtn").addEventListener("click", function () {
-    modalContent.innerText = "📖 Loading flowchart notations...";
-    document.getElementById("optimizeModalTitle").innerText = "📘 Flowchart Notations";
-
-    fetch("/get_notations")
-        .then(response => response.json())
-        .then(data => {
-            modalContent.innerText = data.content || "⚠️ No notations found.";
-        })
-        .catch(error => {
-            modalContent.innerText = "⚠️ Error loading notations: " + error.message;
-        });
-});
 
 
 
