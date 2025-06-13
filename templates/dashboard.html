@@ -138,7 +138,7 @@
             <button id="runBtn" onclick="runDashboardCode()" class="btn btn-success mt-3">▶️ Run Code</button>
             <button id="optimizeBtn" class="btn btn-info mt-2" onclick="optimizeCode()">✨ Optimize Code</button>
             <button id="generateTheoryBtn" class="btn btn-secondary ms-2" onclick="generateTheoryQuestions()">Generate Theory Questions</button>
-            <button id="flowchartBtn" class="btn btn-secondary ms-2" onclick="generateFlowchart()">🧭 Generate Flowchart</button>
+            <button id="flowchartBtn" class="btn btn-secondary ms-2" onclick="openFlowchartTab()">Generate Flowchart</button>
             <div class="output-label">Output:</div>
             <pre id="output"></pre>
             <br>
@@ -165,7 +165,6 @@
 
         <h5 id="optimizeModalTitle">🚀 Optimized Code</h5>
         <pre id="optimizedResult">Loading...</pre>
-        <button id="notationsBtn" class="btn btn-info" style="display:none;">📘 Notations</button>
         <button id="replaceBtn" class="btn btn-primary mt-3">Replace in Editor</button>
     </div>
 </div>
@@ -345,30 +344,32 @@
     .finally(() => setLoading(generateTheoryBtn, false));
 }
 
-function generateFlowchart() {
+<script>
+function openFlowchartTab() {
     const code = editor.getValue().trim();
     if (!code) {
-        alert("⚠️ Please enter code to generate flowchart.");
+        alert("⚠️ Please write some code before generating the flowchart.");
         return;
     }
-
-    const newTab = window.open('', '_blank'); // Open blank tab immediately
 
     fetch("/view_flowchart", {
         method: "POST",
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: code })
     })
-    .then(response => response.text())
+    .then(response => response.text())  // ← IMPORTANT
     .then(html => {
-        newTab.document.open();
-        newTab.document.write(html);
-        newTab.document.close();
+        const newWindow = window.open("", "_blank");
+        newWindow.document.open();
+        newWindow.document.write(html);
+        newWindow.document.close();
     })
-    .catch(error => {
-        newTab.document.write("<p>⚠️ Failed to generate flowchart: " + error.message + "</p>");
+    .catch(err => {
+        alert("⚠️ Flowchart generation failed.");
+        console.error("Flowchart Error:", err);
     });
 }
+</script>
 
 </script>
 </body>
