@@ -508,55 +508,96 @@ def generate_questions_api():
     questions = generate_theory_questions(code)
     return jsonify({'questions': questions})
 
-from flask import render_template_string
-
-from flask import render_template_string, request
-import base64
+from flask import Flask, request, render_template_string
+import ast
 from graphviz import Digraph
+import base64
+
+class FlowchartGenerator(ast.NodeVisitor):
+    def __init__(self):
+        self.dot = Digraph(format='png')
+        self.dot.attr(rankdir='TB')
+        self.node_id = 0
+        self.prev = None
+
+    def new_node(self, label, shape='box', color='lightblue'):
+        nid = f"node{self.node_id}"
+        self.dot.node(nid, label, shape=shape, style='filled', fillcolor=color)
+        self.node_id += 1
+        return nid
+
+    def add_edge(self, from_node, to_node):
+        self.dot.edge(from_node, to_node)
+
+    def visit_FunctionDef(self, node):
+        start = self.new_node(f"Function: {node.name}", 'oval', 'lightgreen')
+        self.prev = start
+        for stmt in node.body:
+            self.visit(stmt)
+
+    def visit_If(self, node):
+        cond = self.new_node(f"If: {ast.unparse(node.test)}", 'diamond', 'yellow')
+        self.add_edge(self.prev, cond)
+        prev_cond = cond
+
+        if node.body:
+            self.prev = cond
+            for stmt in node.body:
+                self.visit(stmt)
+
+        if node.orelse:
+            self.prev = cond
+            for stmt in node.orelse:
+                self.visit(stmt)
+
+    def visit_Return(self, node):
+        ret = self.new_node(f"Return: {ast.unparse(node.value)}", 'parallelogram', 'orange')
+        self.add_edge(self.prev, ret)
+        self.prev = ret
+
+    def visit_Expr(self, node):
+        expr = self.new_node(f"Expr: {ast.unparse(node)}")
+        self.add_edge(self.prev, expr)
+        self.prev = expr
+
+    def visit_Assign(self, node):
+        assign = self.new_node(f"Assign: {ast.unparse(node)}")
+        self.add_edge(self.prev, assign)
+        self.prev = assign
+
+    def get_dot(self):
+        return self.dot
 
 @app.route('/view_flowchart', methods=['POST'])
 def view_flowchart():
     data = request.get_json()
     code = data.get('code', '')
 
-    # For now, create a static flowchart (dynamic code analysis optional)
-    dot = Digraph(format='png')
-    dot.attr(rankdir='TB', size='8,5')
+    try:
+        tree = ast.parse(code)
+        gen = FlowchartGenerator()
+        gen.visit(tree)
+        dot = gen.get_dot()
 
-    dot.node('start', 'Start', shape='circle', style='filled', fillcolor='lightgreen')
-    dot.node('input', 'Input: n', shape='parallelogram', style='filled', fillcolor='lightblue')
-    dot.node('cond', 'Is n <= 1?', shape='diamond', style='filled', fillcolor='yellow')
-    dot.node('output1', 'Output: 1', shape='parallelogram', style='filled', fillcolor='lightblue')
-    dot.node('end1', 'End', shape='circle', style='filled', fillcolor='red')
-    dot.node('output2', 'Output: n * fact(n-1)', shape='parallelogram', style='filled', fillcolor='lightblue')
-    dot.node('end2', 'End', shape='circle', style='filled', fillcolor='red')
+        img_data = dot.pipe(format='png')
+        encoded_img = base64.b64encode(img_data).decode('utf-8')
 
-    dot.edge('start', 'input')
-    dot.edge('input', 'cond')
-    dot.edge('cond', 'output1', label='Yes')
-    dot.edge('output1', 'end1')
-    dot.edge('cond', 'output2', label='No')
-    dot.edge('output2', 'end2')
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Flowchart</title>
+        </head>
+        <body style="text-align:center;">
+            <h2>📈 Flowchart</h2>
+            <img src="data:image/png;base64,{encoded_img}" alt="Flowchart" style="max-width:90%; border:1px solid #ccc;">
+        </body>
+        </html>
+        """
+        return render_template_string(html_content)
 
-    img_data = dot.pipe(format='png')
-    encoded_img = base64.b64encode(img_data).decode('utf-8')
-
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Flowchart</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="text-align:center;">
-        <h2>📈 Flowchart</h2>
-        <img src="data:image/png;base64,{encoded_img}" alt="Flowchart" style="max-width:90%; border:1px solid #ccc;">
-    </body>
-    </html>
-    """
-    return render_template_string(html_content)
-
-
+    except Exception as e:
+        return f"Internal Server Error: {e}", 500
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000)
