@@ -299,8 +299,7 @@ def optimize_code(code: str) -> str:
         return f"Error optimizing code: {e}"
 
         
-def generate_theory_questions(code: str, concepts: list[str], difficulty: str = "medium") -> str:
-    concept_str = ", ".join(concepts) if concepts else "general Python programming"
+def generate_theory_questions(code: str, difficulty: str = "medium") -> str:
     prompt = f"""
         You are a Python expert. Analyze the following Python code and detect the Data Structures and Algorithms concepts involved and generate 5 theory-based questions about the key DSA concepts involved ({concept_str}).
         Each question should be at the {difficulty} level and include the correct answer.
@@ -501,13 +500,11 @@ def generate_theory_questions_api():
         return jsonify({'error': 'Code is empty'}), 400
 
     # Detect concepts (you must have this function or dummy return list)
-    detected_concepts = classify_concepts(code)
 
     # Generate theory questions using DeepSeek
     questions = generate_theory_questions(code, detected_concepts, difficulty)
 
     return jsonify({
-        'concepts': detected_concepts,
         'questions': questions
     })
 
