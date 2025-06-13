@@ -509,28 +509,47 @@ def generate_questions_api():
     questions = generate_theory_questions(code)
     return jsonify({'questions': questions})
 
-import os
-from flask import Flask, request, jsonify, send_from_directory
-from pyflowchart import Flowchart
+from flask import render_template_string
 
-@app.route('/generate_flowchart', methods=['POST'])
-def generate_flowchart_api():
+@app.route('/view_flowchart', methods=['POST'])
+def view_flowchart():
     data = request.get_json()
     code = data.get('code', '')
-    
-    if not code.strip():
-        return jsonify({'error': 'No code provided'}), 400
 
-    try:
-        # Convert code to flowchart
-        fc = Flowchart.from_code(code)
-        flowchart_text = fc.flowchart()
+    dot = Digraph(format='png')
+    dot.attr(rankdir='TB', size='8,5')
 
-        # Save as text file or return directly
-        return jsonify({'flowchart': flowchart_text})
-    
-    except Exception as e:
-        return jsonify({'error': f'Error generating flowchart: {str(e)}'}), 500
+    dot.node('start', 'Start', shape='circle', style='filled', fillcolor='lightgreen')
+    dot.node('input', 'Input: n', shape='parallelogram', style='filled', fillcolor='lightblue')
+    dot.node('cond', 'Is n <= 1?', shape='diamond', style='filled', fillcolor='yellow')
+    dot.node('output1', 'Output: 1', shape='parallelogram', style='filled', fillcolor='lightblue')
+    dot.node('end1', 'End', shape='circle', style='filled', fillcolor='red')
+    dot.node('output2', 'Output: n * fact(n-1)', shape='parallelogram', style='filled', fillcolor='lightblue')
+    dot.node('end2', 'End', shape='circle', style='filled', fillcolor='red')
+
+    dot.edge('start', 'input')
+    dot.edge('input', 'cond')
+    dot.edge('cond', 'output1', label='Yes')
+    dot.edge('output1', 'end1')
+    dot.edge('cond', 'output2', label='No')
+    dot.edge('output2', 'end2')
+
+    img_data = dot.pipe(format='png')
+    encoded_img = base64.b64encode(img_data).decode('utf-8')
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Flowchart</title>
+    </head>
+    <body style="text-align:center;">
+        <h2>📈 Flowchart</h2>
+        <img src="data:image/png;base64,{encoded_img}" alt="Flowchart" style="max-width:90%; border:1px solid #ccc;">
+    </body>
+    </html>
+    """
+    return render_template_string(html_content)
 
 
 if __name__ == '__main__':
