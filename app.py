@@ -475,10 +475,10 @@ def generate_llm_explanation(error_msg: str, user_level: str) -> str:
 def explain_error(code: str, error_msg: str, level: str) -> str:
     rb = rule_based_match(error_msg)
     if rb:
-        return rb
+        return generate_llm_explanation(error_msg, level)
     sm = semantic_match(error_msg)
     if sm:
-        return sm
+        return generate_llm_explanation(error_msg, level)
     return generate_llm_explanation(error_msg, level)
 
 # Flask API route
