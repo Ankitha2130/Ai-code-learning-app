@@ -392,13 +392,13 @@ from sentence_transformers import SentenceTransformer, util
 
 
 # Load explanation dataset
-with open("error_explanations.json", "r") as f:
-    error_dict = json.load(f)
-error_keys = list(error_dict.keys())
+#with open("error_explanations.json", "r") as f:
+#   error_dict = json.load(f)
+#error_keys = list(error_dict.keys())
 
 # Load semantic search model
-embed_model = SentenceTransformer("all-MiniLM-L6-v2")
-error_embeddings = embed_model.encode(error_keys, convert_to_tensor=True)
+#embed_model = SentenceTransformer("all-MiniLM-L6-v2")
+#error_embeddings = embed_model.encode(error_keys, convert_to_tensor=True)
 
 # Rule-based error shortcut
 def rule_based_match(error_msg: str) -> str:
