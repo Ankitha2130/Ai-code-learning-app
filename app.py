@@ -321,21 +321,38 @@ def generate_theory_questions(code: str) -> str:
         questions = full_output[len(prompt):].strip()
         return questions
 
-    except Exception as e:
-        return f"Error generating questions: {e}"
-
 def explain_error(code: str, error_message: str, level: str) -> str:
-    prompt = f"""Analyze the following Python code and error. Then do two things:
-                1. Explain the error clearly (as if teaching a {level} student).
-                2. Provide a correct version of the code.
-                Code:
-                {code}
+    if level=="Beginnner":
+        prompt = f"""Analyze the following Python code and error. Then do two things:
+                    1. Explain the error clearly (as if teaching a {level} student).
+                    2. Provide Example for illustration.
+                    3. Provide a correct version of the code.
+                    Code:
+                    {code}
 
-                Error:
-                {error_message}
-            """
+                    Error:
+                    {error_message}
+                """
+    else if level=="Intermediate":
+        prompt = f"""Analyze the following Python code and error. Then do two things:
+                    1. Explain the error clearly (as if teaching a {level} student).
+                    2. Provide a correct version of the code.
+                    Code:
+                    {code}
 
-    
+                    Error:
+                    {error_message}
+                """
+    else:
+        prompt = f"""Analyze the following Python code and error. Then do two things:
+                    1. Explain the error clearly (as if teaching a {level} student).
+                    2. Provide a correct version of the code.
+                    Code:
+                    {code}
+
+                    Error:
+                    {error_message}
+                """
     try:
         inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
         
@@ -483,82 +500,6 @@ def generate_questions_api():
     code = data.get('code', '')
     questions = generate_theory_questions(code)
     return jsonify({'questions': questions})
-
-
-from graphviz import Digraph
-import uuid
-
-import ast
-
-def code_to_flowchart_dsl(code: str) -> str:
-    try:
-        tree = ast.parse(code)
-    except SyntaxError as e:
-        return f"# Invalid Python code: {e}"
-
-    lines = []
-    counter = {'start': 1, 'cond': 1, 'io': 1, 'end': 1}
-    arrows = []
-
-    def node_id(prefix):
-        counter[prefix] += 1
-        return f"{prefix}{counter[prefix]}"
-
-    def walk(node, parent=None):
-        if isinstance(node, ast.FunctionDef):
-            start = f"st{counter['start']}: start: Start {node.name}"
-            lines.append(start)
-            last_id = f"st{counter['start']}"
-            for stmt in node.body:
-                nid, flow = walk(stmt, last_id)
-                arrows.append(f"{last_id}->{nid}")
-                last_id = nid
-            eid = node_id('end')
-            lines.append(f"{eid}=>end: End Function")
-            arrows.append(f"{last_id}->{eid}")
-            return eid, lines
-
-        elif isinstance(node, ast.If):
-            cond_id = node_id('cond')
-            lines.append(f"{cond_id}=>condition: if {ast.unparse(node.test)}")
-            for stmt in node.body:
-                tid, _ = walk(stmt, cond_id)
-                arrows.append(f"{cond_id}(yes)->{tid}")
-            for stmt in node.orelse:
-                fid, _ = walk(stmt, cond_id)
-                arrows.append(f"{cond_id}(no)->{fid}")
-            return cond_id, lines
-
-        elif isinstance(node, ast.Return):
-            rid = node_id('io')
-            lines.append(f"{rid}=>inputoutput: return {ast.unparse(node.value)}")
-            return rid, lines
-
-        elif isinstance(node, ast.Expr):
-            eid = node_id('io')
-            lines.append(f"{eid}=>inputoutput: {ast.unparse(node)}")
-            return eid, lines
-
-        else:
-            iid = node_id('io')
-            lines.append(f"{iid}=>inputoutput: {ast.unparse(node)}")
-            return iid, lines
-
-    walk(tree.body[0]) if tree.body else None
-    return "\n".join(lines + arrows)
-
-@app.route('/generate_flowchart', methods=['POST'])
-def generate_flowchart_api():
-    data = request.get_json()
-    code = data.get('code', '')
-    if not code:
-        return jsonify({"error": "Code is empty"}), 400
-    try:
-        flow_text = code_to_flowchart_dsl(code)
-        image_path = generate_flowchart(flow_text)
-        return jsonify({"image_url": '/' + image_path})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 
 
