@@ -9,3 +9,4 @@ transformers
 huggingface_hub
 sentencepiece
 flask_cors
+graphviz
