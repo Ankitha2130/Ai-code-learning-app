@@ -299,7 +299,7 @@ def optimize_code(code: str) -> str:
 
 def generate_theory_questions(code: str) -> str:
     prompt = f"""
-        You are a Python expert. Explain the following codein terms of data structures and algorithms used and generate 5 theory-based questions about the key DSA concepts involved.
+        You are a Python expert. Explain the following codein terms of data structures and algorithms used and generate 5 theory-based questions about the key python and DSA concepts(for example recursion) involved.
         Each question should include the correct answer.
 
         Code:
