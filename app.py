@@ -42,10 +42,10 @@ CORS(app)
 
 # Hardcoded user
 USER_DATA = {
-    'name': 'abc',
-    'email': 'abc@gmail.com',
-    'password': '123',
-    'skill_level': 'expert'
+    'name': 'Ankitha R',
+    'email': 'ankitharankithar@gmail.com',
+    'password': 'Ankitha@123',
+    'skill_level': 'Intermediate'
 }
 
 @app.route('/')
